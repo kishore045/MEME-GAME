@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Symposiyam Meme Quiz</title>
+  <style>
+    :root{--bg:#0b1020;--card:#0f1724;--accent:#7c3aed;--muted:#9aa4bf}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;background:linear-gradient(180deg,var(--bg),#071025);color:#e6eef8;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+    .wrap{width:100%;max-width:900px}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px;padding:20px;box-shadow:0 6px 30px rgba(2,6,23,0.6);}
+    .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+    h1{font-size:20px;margin:0}
+    .controls{display:flex;gap:8px;align-items:center}
+    button{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:10px;color:inherit;cursor:pointer}
+    button.primary{background:linear-gradient(90deg,var(--accent),#5b21b6);border:0}
+    .meme-area{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start}
+    @media(max-width:800px){.meme-area{grid-template-columns:1fr}}
+    .image-card{background:rgba(255,255,255,0.02);padding:12px;border-radius:10px;display:flex;flex-direction:column;align-items:center}
+    img{max-width:100%;height:auto;border-radius:8px;margin-bottom:8px}
+    .meta{display:flex;justify-content:space-between;width:100%;align-items:center;font-size:13px;color:var(--muted)}
+    .side{background:rgba(255,255,255,0.02);padding:12px;border-radius:10px;height:100%}
+    label{display:block;font-size:13px;margin-bottom:6px;color:var(--muted)}
+    .answer{display:flex;gap:8px}
+    input[type=text]{flex:1;padding:10px;border-radius:8px;border:1px dashed rgba(255,255,255,0.12);background:transparent;color:inherit}
+    .dash{letter-spacing:6px;padding:10px 12px;border-radius:8px;border:1px dashed rgba(255,255,255,0.12);min-height:44px}
+    .small{font-size:13px;color:var(--muted)}
+    .progress{height:8px;background:rgba(255,255,255,0.04);border-radius:6px;overflow:hidden}
+    .progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#4f46e5);width:0%}
+    footer{margin-top:12px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+    .kbd{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.03)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <h1>Symposiyam — Meme Quiz (25)</h1>
+        <div class="controls">
+          <button id="prevBtn">◀ Prev</button>
+          <button id="nextBtn">Next ▶</button>
+          <button id="randBtn">🔀 Random</button>
+          <button id="playAudioBtn" class="primary">▶ Play Audio</button>
+        </div>
+      </div>
+
+      <div class="meme-area">
+        <div class="image-card">
+          <img id="memeImg" src="memes/meme1.jpg" alt="meme"/>
+          <div class="meta">
+            <div id="memeTitle">Meme 1</div>
+            <div class="small" id="counter">1 / 25</div>
+          </div>
+          <div style="width:100%;margin-top:10px" class="progress"><i id="prog"></i></div>
+        </div>
+
+        <div class="side">
+          <label for="answer">Type your answer / caption (dash area below):</label>
+          <div class="dash" id="dashArea">__________</div>
+          <div style="height:8px"></div>
+          <div class="answer">
+            <input id="answerInput" type="text" placeholder="Enter answer/caption here" />
+            <button id="submitBtn">Submit</button>
+          </div>
+          <p class="small" style="margin-top:10px">Click <span class="kbd">Play Audio</span> to hear the original sound attached to the meme. Use left/right arrows to navigate.</p>
+          <hr style="opacity:.06;margin:12px 0"/>
+          <label class="small">Meme Info</label>
+          <div class="small" id="memeInfo">Original audio: <span id="audioName">meme1.mp3</span></div>
+        </div>
+      </div>
+
+      <footer>
+        <div class="small">Created for your symposiyam — replace files in /memes and /audio</div>
+        <div class="small">Tips: Host on Netlify / GitHub Pages</div>
+      </footer>
+    </div>
+  </div>
+
+  <audio id="audioPlayer" preload="none"></audio>
+
+  <script>
+    // --- CONFIG: replace these arrays with your real file names ---
+    const MEMES = Array.from({length:25},(_,i)=>({
+      img: `memes/${i+1}.jpg`,
+      audio: `audio/${i+1}.mp3`,
+      title: `Meme ${i+1}`
+    }));
+    // -----------------------------------------------------------
+
+    let index = 0;
+    const imgEl = document.getElementById('memeImg');
+    const titleEl = document.getElementById('memeTitle');
+    const counterEl = document.getElementById('counter');
+    const progEl = document.getElementById('prog');
+    const audio = document.getElementById('audioPlayer');
+    const audioName = document.getElementById('audioName');
+    const dash = document.getElementById('dashArea');
+    const answerInput = document.getElementById('answerInput');
+
+    function render(){
+      const item = MEMES[index];
+      imgEl.src = item.img;
+      titleEl.textContent = item.title;
+      counterEl.textContent = `${index+1} / ${MEMES.length}`;
+      progEl.style.width = `${((index+1)/MEMES.length)*100}%`;
+      audio.src = item.audio;
+      audioName.textContent = item.audio.split('/').pop();
+      dash.textContent = '__________';
+      answerInput.value = '';
+    }
+
+    document.getElementById('nextBtn').addEventListener('click',()=>{ index = (index+1) % MEMES.length; render(); });
+    document.getElementById('prevBtn').addEventListener('click',()=>{ index = (index-1 + MEMES.length) % MEMES.length; render(); });
+    document.getElementById('randBtn').addEventListener('click',()=>{ index = Math.floor(Math.random()*MEMES.length); render(); });
+    document.getElementById('playAudioBtn').addEventListener('click',()=>{
+      if(!audio.src) return; audio.currentTime=0; audio.play();
+    });
+
+    // submit will show typed text under dash area
+    document.getElementById('submitBtn').addEventListener('click',()=>{
+      const v = answerInput.value.trim();
+      dash.textContent = v ? v : '__________';
+    });
+
+    // keyboard nav
+    window.addEventListener('keydown',(e)=>{
+      if(e.key === 'ArrowRight') document.getElementById('nextBtn').click();
+      if(e.key === 'ArrowLeft') document.getElementById('prevBtn').click();
+      if(e.key === ' ') { e.preventDefault(); document.getElementById('playAudioBtn').click(); }
+    });
+
+    // preload images - optional
+    MEMES.forEach(it=>{ const im=new Image(); im.src=it.img; });
+
+    // initial render
+    render();
+  </script>
+</body>
+</html>
